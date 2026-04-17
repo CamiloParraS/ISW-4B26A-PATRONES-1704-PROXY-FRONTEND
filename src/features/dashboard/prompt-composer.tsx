@@ -42,26 +42,26 @@ export function PromptComposer({
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Prompt generation</CardTitle>
+                <CardTitle>Generación de prompts</CardTitle>
                 <CardDescription>
-                    Token estimation uses the same deterministic backend formula.
+                    La estimación de tokens usa la misma fórmula determinista del backend.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 {helperMessage ? (
-                    <Alert tone="warning" title="Submission paused" message={helperMessage} />
+                    <Alert tone="warning" title="Envío pausado" message={helperMessage} />
                 ) : null}
                 <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
                     <div className="flex flex-col gap-1">
                         <label htmlFor="prompt" className="text-xs font-semibold tracking-wide uppercase">
-                            Prompt
+                            Instrucción
                         </label>
                         <Textarea
                             id="prompt"
                             value={values.prompt}
                             onChange={(event) => onFieldChange("prompt", event.target.value)}
                             aria-invalid={Boolean(errors.prompt)}
-                            placeholder="Explain proxy pattern in simple terms"
+                            placeholder="Explica el patrón proxy en términos simples"
                         />
                         {errors.prompt ? <p className="text-xs text-destructive">{errors.prompt}</p> : null}
                     </div>
@@ -71,7 +71,7 @@ export function PromptComposer({
                             htmlFor="maxOutputTokens"
                             className="text-xs font-semibold tracking-wide uppercase"
                         >
-                            Max output tokens
+                            Tokens máximos de salida
                         </label>
                         <Input
                             id="maxOutputTokens"
@@ -87,10 +87,10 @@ export function PromptComposer({
 
                     <div className="grid gap-2 border border-border bg-muted p-3 text-xs sm:grid-cols-2">
                         <p>
-                            Prompt tokens estimate: <strong>{estimator.promptTokens}</strong>
+                            Estimación de tokens del prompt: <strong>{estimator.promptTokens}</strong>
                         </p>
                         <p>
-                            Total consumed estimate: <strong>{estimator.consumedTokens}</strong>
+                            Estimación total consumida: <strong>{estimator.consumedTokens}</strong>
                         </p>
                     </div>
 
@@ -98,12 +98,12 @@ export function PromptComposer({
                         {isSubmitting ? (
                             <>
                                 <Spinner data-icon="inline-start" />
-                                Sending prompt...
+                                Enviando prompt...
                             </>
                         ) : (
                             <>
                                 <Sparkles data-icon="inline-start" />
-                                Send prompt
+                                Enviar prompt
                             </>
                         )}
                     </Button>

@@ -42,17 +42,17 @@ export function UpgradeModal({
         setFormError(null)
 
         if (!canUpgrade) {
-            setFormError("Your current plan does not require an upgrade through this flow.")
+            setFormError("Tu plan actual no requiere una actualización mediante este flujo.")
             return
         }
 
         if (paymentForm.cardholderName.trim().length === 0) {
-            setFormError("Cardholder name is required for simulation.")
+            setFormError("El nombre del titular es obligatorio para la simulación.")
             return
         }
 
         if (!/^\d{4}$/.test(paymentForm.cardLast4.trim())) {
-            setFormError("Enter exactly 4 card digits for the simulation field.")
+            setFormError("Ingresa exactamente 4 dígitos de la tarjeta para el campo de simulación.")
             return
         }
 
@@ -68,13 +68,13 @@ export function UpgradeModal({
     return (
         <Modal
             open={open}
-            title="Upgrade plan"
-            description="Simulated checkout to unlock higher monthly token limits."
+            title="Actualizar plan"
+            description="Pago simulado para desbloquear límites mensuales de tokens más altos."
             onClose={onClose}
             footer={
                 <div className="flex flex-wrap justify-end gap-2">
                     <Button type="button" variant="outline" onClick={onClose}>
-                        Cancel
+                        Cancelar
                     </Button>
                     <Button
                         type="button"
@@ -84,10 +84,10 @@ export function UpgradeModal({
                         {isUpgrading || simulationStep === "processing" ? (
                             <>
                                 <Spinner data-icon="inline-start" />
-                                Processing...
+                                Procesando...
                             </>
                         ) : (
-                            "Upgrade to PRO"
+                            "Actualizar a PRO"
                         )}
                     </Button>
                 </div>
@@ -100,7 +100,7 @@ export function UpgradeModal({
                             htmlFor="cardholderName"
                             className="text-xs font-semibold tracking-wide uppercase"
                         >
-                            Cardholder name
+                            Nombre del titular
                         </label>
                         <Input
                             id="cardholderName"
@@ -115,7 +115,7 @@ export function UpgradeModal({
                     </div>
                     <div className="flex flex-col gap-1">
                         <label htmlFor="cardLast4" className="text-xs font-semibold tracking-wide uppercase">
-                            Card last 4 digits
+                            Últimos 4 dígitos de la tarjeta
                         </label>
                         <Input
                             id="cardLast4"
@@ -132,8 +132,8 @@ export function UpgradeModal({
                     </div>
                 </div>
                 <p className="border border-border bg-muted p-3 text-xs text-muted-foreground">
-                    This is a frontend payment simulation. The plan updates only after the backend
-                    confirms the upgrade endpoint.
+                    Esta es una simulación de pago en el frontend. El plan solo se actualiza después de
+                    que el backend confirme el endpoint de actualización.
                 </p>
                 {formError ? <Alert tone="error" message={formError} /> : null}
                 {errorMessage ? <Alert tone="error" message={errorMessage} /> : null}

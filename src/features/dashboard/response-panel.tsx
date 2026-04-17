@@ -18,9 +18,9 @@ export function ResponsePanel({
     return (
         <Card className="h-full">
             <CardHeader>
-                <CardTitle>Last AI response</CardTitle>
+                <CardTitle>Última respuesta de IA</CardTitle>
                 <CardDescription>
-                    The latest successful generation remains visible until replaced.
+                    La última generación exitosa permanece visible hasta ser reemplazada.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -30,18 +30,18 @@ export function ResponsePanel({
                             {response.generatedText}
                         </p>
                         <div className="border border-border p-3">
-                            <MetaItem label="Processing (ms)" value={response.processingTimeMs} />
-                            <MetaItem label="Prompt tokens" value={response.promptTokens} />
+                            <MetaItem label="Procesamiento (ms)" value={response.processingTimeMs} />
+                            <MetaItem label="Tokens del prompt" value={response.promptTokens} />
                             <MetaItem
-                                label="Output estimate"
+                                label="Estimación de salida"
                                 value={response.outputTokensEstimate}
                             />
-                            <MetaItem label="Consumed tokens" value={response.consumedTokens} />
+                            <MetaItem label="Tokens consumidos" value={response.consumedTokens} />
                         </div>
                     </>
                 ) : (
                     <p className="border border-border bg-muted p-3 text-sm text-muted-foreground">
-                        No successful generations yet.
+                        Todavía no hay generaciones exitosas.
                     </p>
                 )}
             </CardContent>

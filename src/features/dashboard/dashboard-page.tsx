@@ -58,7 +58,7 @@ function getRequestLimit(plan: QuotaStatusResponseDto["currentPlan"]) {
 
 function getPlanLimitLabel(plan: QuotaStatusResponseDto["currentPlan"]) {
     if (plan === "ENTERPRISE") {
-        return "Unlimited"
+        return "Ilimitado"
     }
 
     return `${getRequestLimit(plan)}/minute`
@@ -67,29 +67,29 @@ function getPlanLimitLabel(plan: QuotaStatusResponseDto["currentPlan"]) {
 function getFriendlyDashboardError(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 400) {
-            return "Invalid request payload. Check prompt and output token values."
+            return "Carga de solicitud inválida. Revisa el prompt y los valores de tokens de salida."
         }
 
         if (error.status === 500) {
-            return "The backend had an unexpected issue. Please retry in a moment."
+            return "El backend tuvo un problema inesperado. Inténtalo de nuevo en un momento."
         }
 
         return error.message
     }
 
-    return "Something went wrong while communicating with the backend."
+    return "Algo salió mal al comunicarnos con el backend."
 }
 
 function validatePromptFields(values: PromptFormState) {
     const errors: PromptFieldErrors = {}
 
     if (values.prompt.trim().length === 0) {
-        errors.prompt = "Prompt is required and cannot be empty."
+        errors.prompt = "El prompt es obligatorio y no puede estar vacío."
     }
 
     const maxOutputTokens = Number(values.maxOutputTokens)
     if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 1) {
-        errors.maxOutputTokens = "Max output tokens must be a whole number of at least 1."
+        errors.maxOutputTokens = "Los tokens máximos de salida deben ser un número entero de al menos 1."
     }
 
     return errors
@@ -223,11 +223,11 @@ export function DashboardPage() {
 
     const helperMessage = useMemo(() => {
         if (blockedCountdown > 0) {
-            return "Rate limit reached. Wait for the timer before sending another prompt."
+            return "Se alcanzó el límite de velocidad. Espera al temporizador antes de enviar otro prompt."
         }
 
         if (isQuotaExhausted) {
-            return "Monthly quota exhausted. Upgrade your plan to continue generating."
+            return "El cupo mensual se agotó. Actualiza tu plan para seguir generando."
         }
 
         return null
@@ -312,7 +312,7 @@ export function DashboardPage() {
                     const retryAfterSeconds = error.metadata.retryAfterSeconds ?? 60
                     setRateLimitUntil(Date.now() + retryAfterSeconds * 1000)
                     setDashboardError(
-                        "You hit the per-minute limit. Submission is paused until the timer completes."
+                        "Alcanzaste el límite por minuto. El envío queda pausado hasta que termine el temporizador."
                     )
                     return
                 }
@@ -320,7 +320,7 @@ export function DashboardPage() {
                 if (error.status === 402) {
                     setShowUpgradeModal(true)
                     setDashboardError(
-                        "Monthly quota exhausted. Upgrade flow opened so you can continue."
+                        "El cupo mensual se agotó. Se abrió el flujo de actualización para que puedas continuar."
                     )
                     return
                 }
@@ -363,28 +363,28 @@ export function DashboardPage() {
                 <header className="flex flex-col gap-4 border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
                         <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-                            SlopGPT Control Surface
+                            Superficie de control de SlopGPT
                         </p>
-                        <h1 className="text-xl font-semibold">AI generation dashboard</h1>
+                        <h1 className="text-xl font-semibold">Panel de generación de IA</h1>
                         <p className="text-xs text-muted-foreground">
-                            Authenticated as <strong>{session?.username}</strong> ({session?.userId})
+                            Autenticado como <strong>{session?.username}</strong> ({session?.userId})
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <PlanBadge plan={effectivePlan} />
                         <Button variant="outline" onClick={refreshQuotaAndHistory}>
                             <RefreshCcw data-icon="inline-start" />
-                            Refresh usage
+                            Actualizar uso
                         </Button>
                         <Button variant="outline" onClick={handleLogout}>
                             <LogOut data-icon="inline-start" />
-                            Logout
+                            Cerrar sesión
                         </Button>
                     </div>
                 </header>
 
                 {dashboardError ? (
-                    <Alert tone="error" title="Request feedback" message={dashboardError} />
+                    <Alert tone="error" title="Comentarios de la solicitud" message={dashboardError} />
                 ) : null}
 
                 <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
@@ -427,7 +427,7 @@ export function DashboardPage() {
 
                         {isQuotaExhausted ? (
                             <Button className="h-10 text-sm" onClick={() => setShowUpgradeModal(true)}>
-                                Upgrade plan
+                                Actualizar plan
                             </Button>
                         ) : null}
 

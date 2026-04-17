@@ -23,8 +23,8 @@ export function UsageHistoryChart({
     return (
         <Card className="h-full">
             <CardHeader>
-                <CardTitle>Last 7 days</CardTitle>
-                <CardDescription>Daily token consumption from backend history.</CardDescription>
+                <CardTitle>Últimos 7 días</CardTitle>
+                <CardDescription>Consumo diario de tokens desde el historial del backend.</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -44,7 +44,7 @@ export function UsageHistoryChart({
                                         className="w-full bg-primary"
                                         style={{ height: `${barHeight}%` }}
                                         role="img"
-                                        aria-label={`${entry.tokensUsed} tokens used on ${entry.date}`}
+                                        aria-label={`${entry.tokensUsed} tokens usados el ${entry.date}`}
                                     />
                                     <span className="text-center text-[0.6rem] text-muted-foreground">
                                         {formatDayLabel(entry.date)}

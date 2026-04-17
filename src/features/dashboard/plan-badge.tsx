@@ -10,5 +10,5 @@ export function PlanBadge({ plan }: { plan: Plan }) {
         return <Badge variant="enterprise">ENTERPRISE</Badge>
     }
 
-    return <Badge variant="free">FREE</Badge>
+    return <Badge variant="free">GRATIS</Badge>
 }

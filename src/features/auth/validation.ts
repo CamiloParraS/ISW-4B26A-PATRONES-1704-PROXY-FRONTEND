@@ -18,21 +18,21 @@ export function validateRegister(values: RegisterValues) {
   const errors: AuthFieldErrors<RegisterValues> = {}
 
   if (values.userId.trim().length === 0) {
-    errors.userId = "User ID is required."
+    errors.userId = "El ID de usuario es obligatorio."
   }
 
   if (values.email.trim().length === 0) {
-    errors.email = "Email is required."
+    errors.email = "El correo es obligatorio."
   } else if (!emailPattern.test(values.email.trim())) {
-    errors.email = "Enter a valid email format."
+    errors.email = "Ingresa un formato de correo válido."
   }
 
   if (values.username.trim().length < 3) {
-    errors.username = "Username must be at least 3 characters."
+    errors.username = "El nombre de usuario debe tener al menos 3 caracteres."
   }
 
   if (values.encryptedPassword.trim().length === 0) {
-    errors.encryptedPassword = "Encrypted password is required."
+    errors.encryptedPassword = "La contraseña cifrada es obligatoria."
   }
 
   return errors
@@ -42,11 +42,11 @@ export function validateLogin(values: LoginValues) {
   const errors: AuthFieldErrors<LoginValues> = {}
 
   if (values.identifier.trim().length === 0) {
-    errors.identifier = "Identifier is required."
+    errors.identifier = "El identificador es obligatorio."
   }
 
   if (values.encryptedPassword.trim().length === 0) {
-    errors.encryptedPassword = "Encrypted password is required."
+    errors.encryptedPassword = "La contraseña cifrada es obligatoria."
   }
 
   return errors

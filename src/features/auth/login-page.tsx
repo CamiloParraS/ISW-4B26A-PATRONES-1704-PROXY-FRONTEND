@@ -29,15 +29,15 @@ const initialValues: LoginFormState = {
 function getLoginErrorMessage(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 400) {
-            return "Invalid credentials. Use your userId, email, or username plus encrypted password."
+            return "Credenciales inválidas. Usa tu ID de usuario, correo o nombre de usuario junto con la contraseña cifrada."
         }
 
         if (error.status >= 500) {
-            return "The server is unavailable right now. Please try again shortly."
+            return "El servidor no está disponible en este momento. Inténtalo de nuevo en breve."
         }
     }
 
-    return "Login failed. Please verify your credentials and try again."
+    return "El inicio de sesión falló. Verifica tus credenciales e inténtalo de nuevo."
 }
 
 export function LoginPage() {
@@ -94,23 +94,23 @@ export function LoginPage() {
 
     return (
         <AuthLayout
-            title="Welcome back"
-            subtitle="Log in with identifier and encrypted password to continue."
+            title="Bienvenido de nuevo"
+            subtitle="Inicia sesión con tu identificador y contraseña cifrada para continuar."
             alternateAction={{
-                text: "Need an account?",
-                linkText: "Register",
+                text: "¿Necesitas una cuenta?",
+                linkText: "Regístrate",
                 to: ROUTES.register,
             }}
         >
             {registrationSuccess ? (
                 <Alert
                     tone="success"
-                    title="Registration complete"
-                    message="Your account was created. You can sign in now."
+                    title="Registro completado"
+                    message="Tu cuenta fue creada. Ya puedes iniciar sesión."
                 />
             ) : null}
             {errorMessage ? (
-                <Alert tone="error" title="Login failed" message={errorMessage} />
+                <Alert tone="error" title="Error de inicio de sesión" message={errorMessage} />
             ) : null}
             <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
                 <div className="flex flex-col gap-1">
@@ -118,7 +118,7 @@ export function LoginPage() {
                         htmlFor="identifier"
                         className="text-xs font-semibold tracking-wide uppercase"
                     >
-                        Identifier (email, username, or user ID)
+                        Identificador (correo, nombre de usuario o ID de usuario)
                     </label>
                     <Input
                         id="identifier"
@@ -142,7 +142,7 @@ export function LoginPage() {
                         htmlFor="encryptedPassword"
                         className="text-xs font-semibold tracking-wide uppercase"
                     >
-                        Encrypted Password
+                        Contraseña cifrada
                     </label>
                     <Input
                         id="encryptedPassword"
@@ -166,10 +166,10 @@ export function LoginPage() {
                     {isSubmitting ? (
                         <>
                             <Spinner data-icon="inline-start" />
-                            Signing in...
+                            Iniciando sesión...
                         </>
                     ) : (
-                        "Login"
+                        "Iniciar sesión"
                     )}
                 </Button>
             </form>

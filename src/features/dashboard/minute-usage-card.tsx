@@ -25,27 +25,27 @@ export function MinuteUsageCard({
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Per-minute requests</CardTitle>
+                <CardTitle>Solicitudes por minuto</CardTitle>
                 <CardDescription>
-                    Window resets in {formatCountdown(resetCountdownSeconds)}
+                    La ventana se reinicia en {formatCountdown(resetCountdownSeconds)}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
                 <div className="grid grid-cols-2 gap-3 border border-border p-3">
-                    <p className="text-muted-foreground">Used</p>
+                    <p className="text-muted-foreground">Usadas</p>
                     <p className="text-right font-semibold">{requestsUsed}</p>
-                    <p className="text-muted-foreground">Remaining</p>
+                    <p className="text-muted-foreground">Restantes</p>
                     <p className="text-right font-semibold">{requestsRemaining}</p>
-                    <p className="text-muted-foreground">Plan limit</p>
+                    <p className="text-muted-foreground">Límite del plan</p>
                     <p className="text-right font-semibold">{planLimitLabel}</p>
                 </div>
                 {isBlocked ? (
                     <p className="border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                        Rate limit reached. You can send again in {formatCountdown(blockedCountdownSeconds)}.
+                        Se alcanzó el límite de velocidad. Puedes enviar otra vez en {formatCountdown(blockedCountdownSeconds)}.
                     </p>
                 ) : (
                     <p className="border border-border bg-muted p-2 text-xs text-muted-foreground">
-                        Requests are available in the current minute window.
+                        Las solicitudes están disponibles en la ventana actual de un minuto.
                     </p>
                 )}
             </CardContent>

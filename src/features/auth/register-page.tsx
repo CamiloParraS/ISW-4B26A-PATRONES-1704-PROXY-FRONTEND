@@ -32,7 +32,7 @@ const initialValues: RegisterFormState = {
 function getRegistrationErrorMessage(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 409) {
-            return "An account with this user ID, username, or email already exists."
+            return "Ya existe una cuenta con este ID de usuario, nombre de usuario o correo."
         }
 
         if (error.status === 400) {
@@ -40,11 +40,11 @@ function getRegistrationErrorMessage(error: unknown) {
         }
 
         if (error.status >= 500) {
-            return "The server is unavailable right now. Please try again shortly."
+            return "El servidor no está disponible en este momento. Inténtalo de nuevo en breve."
         }
     }
 
-    return "Registration failed. Please verify your data and try again."
+    return "El registro falló. Verifica tus datos e inténtalo de nuevo."
 }
 
 export function RegisterPage() {
@@ -95,21 +95,21 @@ export function RegisterPage() {
 
     return (
         <AuthLayout
-            title="Create account"
-            subtitle="Register with the encrypted password received from your backend-auth flow."
+            title="Crear cuenta"
+            subtitle="Regístrate con la contraseña cifrada recibida desde tu flujo de autenticación del backend."
             alternateAction={{
-                text: "Already registered?",
-                linkText: "Log in",
+                text: "¿Ya estás registrado?",
+                linkText: "Inicia sesión",
                 to: ROUTES.login,
             }}
         >
             {errorMessage ? (
-                <Alert tone="error" title="Registration failed" message={errorMessage} />
+                <Alert tone="error" title="Error de registro" message={errorMessage} />
             ) : null}
             <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
                 <div className="flex flex-col gap-1">
                     <label htmlFor="userId" className="text-xs font-semibold tracking-wide uppercase">
-                        User ID
+                        ID de usuario
                     </label>
                     <Input
                         id="userId"
@@ -130,7 +130,7 @@ export function RegisterPage() {
 
                 <div className="flex flex-col gap-1">
                     <label htmlFor="email" className="text-xs font-semibold tracking-wide uppercase">
-                        Email
+                        Correo
                     </label>
                     <Input
                         id="email"
@@ -155,7 +155,7 @@ export function RegisterPage() {
                         htmlFor="username"
                         className="text-xs font-semibold tracking-wide uppercase"
                     >
-                        Username
+                        Nombre de usuario
                     </label>
                     <Input
                         id="username"
@@ -178,7 +178,7 @@ export function RegisterPage() {
                         htmlFor="encryptedPassword"
                         className="text-xs font-semibold tracking-wide uppercase"
                     >
-                        Encrypted Password
+                        Contraseña cifrada
                     </label>
                     <Input
                         id="encryptedPassword"
@@ -202,15 +202,15 @@ export function RegisterPage() {
                     {isSubmitting ? (
                         <>
                             <Spinner data-icon="inline-start" />
-                            Creating account...
+                            Creando cuenta...
                         </>
                     ) : (
-                        "Register"
+                        "Registrarse"
                     )}
                 </Button>
             </form>
             <Link className="text-xs text-muted-foreground underline" to={ROUTES.login}>
-                Back to login
+                Volver al inicio de sesión
             </Link>
         </AuthLayout>
     )

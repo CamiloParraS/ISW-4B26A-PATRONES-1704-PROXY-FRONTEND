@@ -12,13 +12,13 @@ export function NotFoundPage() {
                 <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
                     404
                 </p>
-                <h1 className="text-2xl font-semibold">Page not found</h1>
+                <h1 className="text-2xl font-semibold">Página no encontrada</h1>
                 <p className="text-sm text-muted-foreground">
-                    The route you requested does not exist.
+                    La ruta que solicitaste no existe.
                 </p>
                 <div>
                     <Button onClick={() => navigate(ROUTES.dashboard)}>
-                        Return to dashboard
+                        Volver al panel
                     </Button>
                 </div>
             </div>

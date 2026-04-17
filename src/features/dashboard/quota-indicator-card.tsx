@@ -27,8 +27,8 @@ export function QuotaIndicatorCard({
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Monthly quota</CardTitle>
-                    <CardDescription>Loading usage...</CardDescription>
+                    <CardTitle>Cupo mensual</CardTitle>
+                    <CardDescription>Cargando uso...</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                     <Skeleton className="h-4 w-full" />
@@ -42,13 +42,13 @@ export function QuotaIndicatorCard({
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Monthly quota</CardTitle>
-                    <CardDescription>Usage data unavailable.</CardDescription>
+                    <CardTitle>Cupo mensual</CardTitle>
+                    <CardDescription>Datos de uso no disponibles.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Alert
                         tone="warning"
-                        message={errorMessage ?? "Could not load quota status from backend."}
+                        message={errorMessage ?? "No se pudo cargar el estado del cupo desde el backend."}
                     />
                 </CardContent>
             </Card>
@@ -59,11 +59,11 @@ export function QuotaIndicatorCard({
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Monthly quota</CardTitle>
-                    <CardDescription>Unlimited usage on ENTERPRISE plan.</CardDescription>
+                    <CardTitle>Cupo mensual</CardTitle>
+                    <CardDescription>Uso ilimitado en el plan ENTERPRISE.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="border border-border bg-muted p-3 text-sm">Unlimited</div>
+                    <div className="border border-border bg-muted p-3 text-sm">Ilimitado</div>
                 </CardContent>
             </Card>
         )
@@ -75,17 +75,17 @@ export function QuotaIndicatorCard({
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Monthly quota</CardTitle>
-                <CardDescription>Resets on {status.monthlyResetDate}</CardDescription>
+                <CardTitle>Cupo mensual</CardTitle>
+                <CardDescription>Se restablece el {status.monthlyResetDate}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <Progress value={progressValue} />
                 <div className="grid gap-2 text-xs sm:grid-cols-2">
                     <p>
-                        Used: <strong>{formatNumber(status.monthlyTokensUsed)}</strong>
+                        Usados: <strong>{formatNumber(status.monthlyTokensUsed)}</strong>
                     </p>
                     <p>
-                        Remaining: <strong>{formatNumber(status.monthlyTokensRemaining)}</strong>
+                        Restantes: <strong>{formatNumber(status.monthlyTokensRemaining)}</strong>
                     </p>
                 </div>
             </CardContent>
