@@ -1,21 +1,51 @@
-# React + TypeScript + Vite + shadcn/ui
+# SlopGPT Frontend
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+Production-oriented React frontend for the SlopGPT backend contract.
 
-## Adding components
+## Features
 
-To add components to your app, run the following command:
+- Register and login with backend-aligned DTOs.
+- Protected dashboard route with session bootstrapping.
+- Chat-like prompt generation interface.
+- Deterministic token estimator before submission.
+- Live monthly quota progress and reset date.
+- Per-minute request usage with reset countdown.
+- `429` handling with temporary send lock and countdown.
+- `402` handling that opens upgrade simulation modal.
+- Last 7-day usage bar chart from backend history.
+- Last successful response panel with metadata.
+
+## Environment
+
+Create `.env` from `.env.example`:
 
 ```bash
-npx shadcn@latest add button
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-This will place the ui components in the `src/components` directory.
+## Scripts
 
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
+```bash
+npm install
+npm run dev
+npm run typecheck
+npm run lint
+npm run build
 ```
+
+## Architecture
+
+- `src/config`: Route and environment constants.
+- `src/services`: Typed API client and endpoint-specific service modules.
+- `src/types`: DTO contracts mirroring backend payloads.
+- `src/features/auth`: Auth forms, validation, context, route guards.
+- `src/features/dashboard`: Prompt flow, quota/rate widgets, chart, upgrade modal.
+- `src/components/ui`: Shared UI primitives.
+- `src/lib` and `src/hooks`: Storage/time utilities and countdown hook.
+
+## Route Map
+
+- `/login`
+- `/register`
+- `/` (protected dashboard)
+- `/404` and wildcard fallback
