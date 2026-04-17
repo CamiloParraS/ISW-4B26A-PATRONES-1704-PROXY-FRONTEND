@@ -3,13 +3,7 @@ import { Sparkles } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -78,17 +72,20 @@ export function PromptComposer({
                   setTimeout(() => {
                     try {
                       ta.selectionStart = ta.selectionEnd = start + 1
-                    } catch (e) {
+                    } catch {
                       /* ignore */
                     }
                   }, 0)
                 } else {
                   // Enter -> send message (submit form)
                   event.preventDefault()
-                  const form = ta.form
+                  const form = ta.form as HTMLFormElement | null
                   if (form) {
-                    if (typeof (form as any).requestSubmit === "function") {
-                      ;(form as any).requestSubmit()
+                    const maybeRequestSubmit = (
+                      form as HTMLFormElement & { requestSubmit?: unknown }
+                    ).requestSubmit
+                    if (typeof maybeRequestSubmit === "function") {
+                      ;(maybeRequestSubmit as () => void)()
                     } else {
                       form.dispatchEvent(
                         new Event("submit", { bubbles: true, cancelable: true })

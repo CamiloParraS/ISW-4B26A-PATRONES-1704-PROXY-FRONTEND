@@ -145,8 +145,8 @@ export function UsagePage() {
 
       try {
         const [nextQuotaStatus, nextHistory] = await Promise.all([
-          getQuotaStatus(userId),
-          getQuotaHistory(userId),
+          getQuotaStatus(userId!),
+          getQuotaHistory(userId!),
         ])
 
         if (isCancelled) {
