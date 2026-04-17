@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useMemo, useState } from "react"
 
 import { Alert } from "@/components/ui/alert"
@@ -16,23 +16,21 @@ import { ApiClientError } from "@/services/api/client"
 import { registerUser } from "@/services/auth-service"
 
 type RegisterFormState = {
-    userId: string
     email: string
     username: string
-    encryptedPassword: string
+    password: string
 }
 
 const initialValues: RegisterFormState = {
-    userId: "",
     email: "",
     username: "",
-    encryptedPassword: "",
+    password: "",
 }
 
 function getRegistrationErrorMessage(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 409) {
-            return "Ya existe una cuenta con este ID de usuario, nombre de usuario o correo."
+            return "Ya existe una cuenta con ese nombre de usuario o correo."
         }
 
         if (error.status === 400) {
@@ -74,10 +72,9 @@ export function RegisterPage() {
         try {
             setIsSubmitting(true)
             await registerUser({
-                userId: values.userId.trim(),
                 email: values.email.trim(),
                 username: values.username.trim(),
-                encryptedPassword: values.encryptedPassword.trim(),
+                password: values.password.trim(),
             })
 
             navigate(ROUTES.login, {
@@ -96,7 +93,7 @@ export function RegisterPage() {
     return (
         <AuthLayout
             title="Crear cuenta"
-            subtitle="Regístrate con la contraseña cifrada recibida desde tu flujo de autenticación del backend."
+            subtitle="Regístrate con correo, nombre de usuario y contraseña para crear tu cuenta."
             alternateAction={{
                 text: "¿Ya estás registrado?",
                 linkText: "Inicia sesión",
@@ -106,34 +103,17 @@ export function RegisterPage() {
             {errorMessage ? (
                 <Alert tone="error" title="Error de registro" message={errorMessage} />
             ) : null}
-            <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="userId" className="text-xs font-semibold tracking-wide uppercase">
-                        ID de usuario
-                    </label>
-                    <Input
-                        id="userId"
-                        value={values.userId}
-                        onChange={(event) =>
-                            setValues((currentValues) => ({
-                                ...currentValues,
-                                userId: event.target.value,
-                            }))
-                        }
-                        aria-invalid={Boolean(fieldErrors.userId)}
-                        autoComplete="username"
-                    />
-                    {fieldErrors.userId ? (
-                        <p className="text-xs text-destructive">{fieldErrors.userId}</p>
-                    ) : null}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="email" className="text-xs font-semibold tracking-wide uppercase">
+            <form className="flex flex-col gap-5" onSubmit={onSubmit} noValidate>
+                <div className="flex flex-col gap-2">
+                    <label
+                        htmlFor="email"
+                        className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
+                    >
                         Correo
                     </label>
                     <Input
                         id="email"
+                        placeholder="tu@correo.com"
                         value={values.email}
                         type="email"
                         onChange={(event) =>
@@ -150,15 +130,16 @@ export function RegisterPage() {
                     ) : null}
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                     <label
                         htmlFor="username"
-                        className="text-xs font-semibold tracking-wide uppercase"
+                        className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
                     >
                         Nombre de usuario
                     </label>
                     <Input
                         id="username"
+                        placeholder="tu_alias"
                         value={values.username}
                         onChange={(event) =>
                             setValues((currentValues) => ({
@@ -173,32 +154,33 @@ export function RegisterPage() {
                     ) : null}
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                     <label
-                        htmlFor="encryptedPassword"
-                        className="text-xs font-semibold tracking-wide uppercase"
+                        htmlFor="password"
+                        className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
                     >
-                        Contraseña cifrada
+                        Contraseña
                     </label>
                     <Input
-                        id="encryptedPassword"
-                        value={values.encryptedPassword}
+                        id="password"
+                        placeholder="••••••••"
+                        value={values.password}
                         onChange={(event) =>
                             setValues((currentValues) => ({
                                 ...currentValues,
-                                encryptedPassword: event.target.value,
+                                password: event.target.value,
                             }))
                         }
-                        aria-invalid={Boolean(fieldErrors.encryptedPassword)}
+                        aria-invalid={Boolean(fieldErrors.password)}
                         autoComplete="new-password"
                         type="password"
                     />
-                    {fieldErrors.encryptedPassword ? (
-                        <p className="text-xs text-destructive">{fieldErrors.encryptedPassword}</p>
+                    {fieldErrors.password ? (
+                        <p className="text-xs text-destructive">{fieldErrors.password}</p>
                     ) : null}
                 </div>
 
-                <Button type="submit" disabled={!canSubmit} className="h-10 text-sm">
+                <Button type="submit" disabled={!canSubmit} className="h-11 w-full text-sm">
                     {isSubmitting ? (
                         <>
                             <Spinner data-icon="inline-start" />
@@ -209,9 +191,6 @@ export function RegisterPage() {
                     )}
                 </Button>
             </form>
-            <Link className="text-xs text-muted-foreground underline" to={ROUTES.login}>
-                Volver al inicio de sesión
-            </Link>
         </AuthLayout>
     )
 }

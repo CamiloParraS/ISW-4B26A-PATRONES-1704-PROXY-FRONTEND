@@ -3,7 +3,10 @@ import { cn } from "@/lib/utils"
 export function Card({ className, ...props }: React.ComponentProps<"section">) {
     return (
         <section
-            className={cn("border border-border bg-card text-card-foreground", className)}
+            className={cn(
+                "rounded-2xl border border-border bg-card text-card-foreground shadow-sm",
+                className
+            )}
             {...props}
         />
     )
@@ -13,12 +16,12 @@ export function CardHeader({
     className,
     ...props
 }: React.ComponentProps<"header">) {
-    return <header className={cn("flex flex-col gap-1 p-4", className)} {...props} />
+    return <header className={cn("flex flex-col gap-1.5 p-4", className)} {...props} />
 }
 
 export function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
     return (
-        <h2 className={cn("text-sm font-semibold tracking-wide uppercase", className)} {...props} />
+        <h2 className={cn("text-sm font-semibold tracking-wide text-foreground", className)} {...props} />
     )
 }
 

@@ -25,3 +25,6 @@ dist-ssr
 .test.ts
 .test.tsx
 .agents
+.agents
+.env
+skills-lock.json

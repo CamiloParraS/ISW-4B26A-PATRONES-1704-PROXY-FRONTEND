@@ -41,6 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         return null
                     }
 
+                    if (currentSession.currentPlan === nextPlan) {
+                        return currentSession
+                    }
+
                     const updatedSession = {
                         ...currentSession,
                         currentPlan: nextPlan,

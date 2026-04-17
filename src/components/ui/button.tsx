@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/85",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
@@ -47,7 +47,7 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn("rounded-none", buttonVariants({ variant, size, className }))}
+      className={cn("rounded-xl", buttonVariants({ variant, size, className }))}
       {...props}
     />
   )

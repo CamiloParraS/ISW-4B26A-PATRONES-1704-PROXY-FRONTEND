@@ -1,9 +1,12 @@
-import { LogOut, RefreshCcw } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { LogOut } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { ROUTES } from "@/config/routes"
 import { useAuth } from "@/features/auth/auth-context"
+import { validatePrompt } from "@/features/auth/validation"
 import { useCountdown } from "@/hooks/use-countdown"
 import {
     clearStoredLastResponse,
@@ -12,62 +15,49 @@ import {
     getStoredMinuteUsage,
     setStoredLastResponse,
     setStoredMinuteUsage,
+    getStoredQuotaSnapshot,
+    setStoredQuotaSnapshot,
 } from "@/lib/storage"
 import { getNextMinuteBoundaryEpochMs } from "@/lib/time"
 import { generatePrompt } from "@/services/ai-service"
 import { ApiClientError } from "@/services/api/client"
-import { getQuotaHistory, getQuotaStatus, upgradePlan } from "@/services/quota-service"
+import { upgradePlan } from "@/services/quota-service"
 import type {
     GenerateResponseDto,
-    QuotaHistoryResponseDto,
     QuotaStatusResponseDto,
 } from "@/types/contracts"
 
-import { estimateConsumedTokens, estimatePromptTokens } from "./token-estimator"
-import { MinuteUsageCard } from "./minute-usage-card"
 import { PlanBadge } from "./plan-badge"
 import { PromptComposer } from "./prompt-composer"
-import { QuotaIndicatorCard } from "./quota-indicator-card"
 import { ResponsePanel } from "./response-panel"
 import { UpgradeModal } from "./upgrade-modal"
-import { UsageHistoryChart } from "./usage-history-chart"
 
 type PromptFormState = {
     prompt: string
-    maxOutputTokens: string
 }
 
 type PromptFieldErrors = Partial<Record<keyof PromptFormState, string>>
 
 const initialPromptState: PromptFormState = {
     prompt: "",
-    maxOutputTokens: "120",
-}
-
-function getRequestLimit(plan: QuotaStatusResponseDto["currentPlan"]) {
-    if (plan === "PRO") {
-        return 60
-    }
-
-    if (plan === "ENTERPRISE") {
-        return Number.POSITIVE_INFINITY
-    }
-
-    return 10
-}
-
-function getPlanLimitLabel(plan: QuotaStatusResponseDto["currentPlan"]) {
-    if (plan === "ENTERPRISE") {
-        return "Ilimitado"
-    }
-
-    return `${getRequestLimit(plan)}/minute`
 }
 
 function getFriendlyDashboardError(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 400) {
-            return "Carga de solicitud inválida. Revisa el prompt y los valores de tokens de salida."
+            return "Carga de solicitud inválida. Revisa el prompt y vuelve a intentarlo."
+        }
+
+        if (error.status === 402) {
+            return "El cupo mensual se agotó. Actualiza el plan o espera al próximo reinicio mensual."
+        }
+
+        if (error.status === 409) {
+            return "El backend encontró un conflicto al procesar la solicitud."
+        }
+
+        if (error.status === 429) {
+            return "Alcanzaste el límite por minuto. Espera antes de volver a intentarlo."
         }
 
         if (error.status === 500) {
@@ -81,91 +71,60 @@ function getFriendlyDashboardError(error: unknown) {
 }
 
 function validatePromptFields(values: PromptFormState) {
-    const errors: PromptFieldErrors = {}
-
-    if (values.prompt.trim().length === 0) {
-        errors.prompt = "El prompt es obligatorio y no puede estar vacío."
-    }
-
-    const maxOutputTokens = Number(values.maxOutputTokens)
-    if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 1) {
-        errors.maxOutputTokens = "Los tokens máximos de salida deben ser un número entero de al menos 1."
-    }
-
-    return errors
+    return validatePrompt(values)
 }
 
 function hasAnyError(errors: PromptFieldErrors) {
     return Object.values(errors).some(Boolean)
 }
 
-function resolveInitialMinuteUsage(requestLimit: number) {
+function resolveInitialMinuteResetAt() {
     const storedMinuteUsage = getStoredMinuteUsage()
 
     if (!storedMinuteUsage || storedMinuteUsage.resetAtEpochMs <= Date.now()) {
-        return {
-            requestsUsed: 0,
-            requestsRemaining: Number.isFinite(requestLimit) ? requestLimit : 0,
-            minuteWindowResetAt: getNextMinuteBoundaryEpochMs(),
-        }
+        return getNextMinuteBoundaryEpochMs()
     }
 
-    return {
-        requestsUsed: storedMinuteUsage.requestsUsedInCurrentMinute,
-        requestsRemaining: storedMinuteUsage.requestsRemainingInCurrentMinute,
-        minuteWindowResetAt: storedMinuteUsage.resetAtEpochMs,
-    }
+    return storedMinuteUsage.resetAtEpochMs
 }
 
 export function DashboardPage() {
     const { session, signOut, updatePlan } = useAuth()
-    const initialPlan = session?.currentPlan ?? "FREE"
-    const initialRequestLimit = getRequestLimit(initialPlan)
-    const initialMinuteUsage = resolveInitialMinuteUsage(initialRequestLimit)
-    const [promptValues, setPromptValues] = useState<PromptFormState>(initialPromptState)
+    const navigate = useNavigate()
+    const userId = session?.userId ?? null
+    const [promptValues, setPromptValues] = useState<PromptFormState>({ prompt: "" })
     const [promptErrors, setPromptErrors] = useState<PromptFieldErrors>({})
     const [isGenerating, setIsGenerating] = useState(false)
     const [dashboardError, setDashboardError] = useState<string | null>(null)
     const [quotaError, setQuotaError] = useState<string | null>(null)
     const [quotaStatus, setQuotaStatus] = useState<QuotaStatusResponseDto | null>(null)
-    const [history, setHistory] = useState<QuotaHistoryResponseDto["last7Days"]>([])
     const [isLoadingQuota, setIsLoadingQuota] = useState(true)
-    const [isLoadingHistory, setIsLoadingHistory] = useState(true)
     const [lastResponse, setLastResponse] = useState<GenerateResponseDto | null>(() =>
         getStoredLastResponse()
     )
-    const [requestsUsed, setRequestsUsed] = useState(initialMinuteUsage.requestsUsed)
-    const [requestsRemaining, setRequestsRemaining] = useState(
-        initialMinuteUsage.requestsRemaining
-    )
-    const [minuteWindowResetAt, setMinuteWindowResetAt] = useState<number | null>(
-        initialMinuteUsage.minuteWindowResetAt
+    const [minuteWindowResetAt, setMinuteWindowResetAt] = useState<number | null>(() =>
+        resolveInitialMinuteResetAt()
     )
     const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null)
     const [showUpgradeModal, setShowUpgradeModal] = useState(false)
     const [upgradeError, setUpgradeError] = useState<string | null>(null)
     const [isUpgrading, setIsUpgrading] = useState(false)
 
-    const minuteResetCountdown = useCountdown(minuteWindowResetAt)
     const blockedCountdown = useCountdown(rateLimitUntil)
 
     const effectivePlan = quotaStatus?.currentPlan ?? session?.currentPlan ?? "FREE"
-    const requestLimit = getRequestLimit(effectivePlan)
-    const planLimitLabel = getPlanLimitLabel(effectivePlan)
-    const estimator = useMemo(() => {
-        const maxOutputTokens = Number(promptValues.maxOutputTokens)
-        const safeOutputTokens = Number.isInteger(maxOutputTokens) && maxOutputTokens >= 1 ? maxOutputTokens : 1
-
-        return {
-            promptTokens: estimatePromptTokens(promptValues.prompt),
-            consumedTokens: estimateConsumedTokens(promptValues.prompt, safeOutputTokens),
-        }
-    }, [promptValues.maxOutputTokens, promptValues.prompt])
 
     const isQuotaExhausted =
         quotaStatus?.currentPlan !== "ENTERPRISE" &&
         quotaStatus !== null &&
         quotaStatus.monthlyTokensRemaining <= 0
+
+    const helperMessage =
+        blockedCountdown > 0
+            ? "Se alcanzó el límite de velocidad. Espera al temporizador antes de enviar otro mensaje."
+            : isQuotaExhausted
+                ? "El cupo mensual se agotó. Actualiza tu plan para seguir generando."
+                : null
 
     useEffect(() => {
         if (!minuteWindowResetAt) {
@@ -175,8 +134,6 @@ export function DashboardPage() {
         const timeoutMs = Math.max(0, minuteWindowResetAt - Date.now())
 
         const timeoutId = window.setTimeout(() => {
-            setRequestsUsed(0)
-            setRequestsRemaining(Number.isFinite(requestLimit) ? requestLimit : 0)
             const nextResetAt = getNextMinuteBoundaryEpochMs()
             setMinuteWindowResetAt(nextResetAt)
             clearStoredMinuteUsage()
@@ -185,84 +142,41 @@ export function DashboardPage() {
         return () => {
             window.clearTimeout(timeoutId)
         }
-    }, [minuteWindowResetAt, requestLimit])
+    }, [minuteWindowResetAt])
 
     useEffect(() => {
-        if (!session) {
-            return
-        }
-        const userId = session.userId
-
-        async function loadUsageData() {
-            setQuotaError(null)
-            setIsLoadingQuota(true)
-            setIsLoadingHistory(true)
-
-            try {
-                const [nextQuotaStatus, nextHistory] = await Promise.all([
-                    getQuotaStatus(userId),
-                    getQuotaHistory(userId),
-                ])
-
-                setQuotaStatus(nextQuotaStatus)
-                updatePlan(nextQuotaStatus.currentPlan)
-                setHistory(nextHistory.last7Days)
-            } catch (error) {
-                setQuotaError(getFriendlyDashboardError(error))
-            } finally {
-                setIsLoadingQuota(false)
-                setIsLoadingHistory(false)
-            }
-        }
-
-        void loadUsageData()
-    }, [session, updatePlan])
-
-    const sendingIsBlocked =
-        isGenerating || isQuotaExhausted || blockedCountdown > 0 || !session
-
-    const helperMessage = useMemo(() => {
-        if (blockedCountdown > 0) {
-            return "Se alcanzó el límite de velocidad. Espera al temporizador antes de enviar otro prompt."
-        }
-
-        if (isQuotaExhausted) {
-            return "El cupo mensual se agotó. Actualiza tu plan para seguir generando."
-        }
-
-        return null
-    }, [blockedCountdown, isQuotaExhausted])
-
-    async function refreshQuotaAndHistory() {
-        if (!session) {
+        if (!userId) {
             return
         }
 
         setQuotaError(null)
         setIsLoadingQuota(true)
-        setIsLoadingHistory(true)
 
-        try {
-            const [nextQuotaStatus, nextHistory] = await Promise.all([
-                getQuotaStatus(session.userId),
-                getQuotaHistory(session.userId),
-            ])
-            setQuotaStatus(nextQuotaStatus)
-            updatePlan(nextQuotaStatus.currentPlan)
-            setHistory(nextHistory.last7Days)
-        } catch (error) {
-            setQuotaError(getFriendlyDashboardError(error))
-        } finally {
-            setIsLoadingQuota(false)
-            setIsLoadingHistory(false)
+        const stored = getStoredQuotaSnapshot()
+        if (stored && stored.userId === userId) {
+            setQuotaStatus({
+                userId: stored.userId,
+                currentPlan: stored.currentPlan,
+                monthlyTokensUsed: stored.monthlyTokensUsed,
+                monthlyTokensRemaining: stored.monthlyTokensRemaining,
+                monthlyResetDate: stored.monthlyResetDate,
+            })
+            updatePlan(stored.currentPlan)
+        } else {
+            setQuotaStatus(null)
         }
-    }
+
+        setIsLoadingQuota(false)
+    }, [updatePlan, userId])
+
+    const sendingIsBlocked =
+        isGenerating || isQuotaExhausted || blockedCountdown > 0 || !session || isLoadingQuota
 
     async function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
         setDashboardError(null)
 
-        if (!session || isGenerating) {
+        if (!userId || isGenerating) {
             return
         }
 
@@ -276,9 +190,8 @@ export function DashboardPage() {
             setIsGenerating(true)
 
             const generationResponse = await generatePrompt({
-                userId: session.userId,
+                userId,
                 prompt: promptValues.prompt.trim(),
-                maxOutputTokens: Number(promptValues.maxOutputTokens),
             })
 
             setLastResponse(generationResponse)
@@ -293,10 +206,15 @@ export function DashboardPage() {
                 monthlyResetDate: generationResponse.monthlyResetDate,
             })
             updatePlan(generationResponse.currentPlan)
+            setStoredQuotaSnapshot({
+                userId: generationResponse.userId,
+                currentPlan: generationResponse.currentPlan,
+                monthlyTokensUsed: generationResponse.monthlyTokensUsed,
+                monthlyTokensRemaining: generationResponse.monthlyTokensRemaining,
+                monthlyResetDate: generationResponse.monthlyResetDate,
+            })
 
             const nextResetAt = getNextMinuteBoundaryEpochMs()
-            setRequestsUsed(generationResponse.requestsUsedInCurrentMinute)
-            setRequestsRemaining(generationResponse.requestsRemainingInCurrentMinute)
             setMinuteWindowResetAt(nextResetAt)
             setStoredMinuteUsage({
                 requestsUsedInCurrentMinute: generationResponse.requestsUsedInCurrentMinute,
@@ -304,8 +222,6 @@ export function DashboardPage() {
                     generationResponse.requestsRemainingInCurrentMinute,
                 resetAtEpochMs: nextResetAt,
             })
-
-            await refreshQuotaAndHistory()
         } catch (error) {
             if (error instanceof ApiClientError) {
                 if (error.status === 429) {
@@ -333,17 +249,24 @@ export function DashboardPage() {
     }
 
     async function handleUpgradeConfirm() {
-        if (!session) {
+        if (!userId) {
             return
         }
 
         setUpgradeError(null)
         try {
             setIsUpgrading(true)
-            const upgradeResponse = await upgradePlan(session.userId)
+            const upgradeResponse = await upgradePlan(userId)
             updatePlan(upgradeResponse.toPlan)
+            setQuotaStatus((currentStatus) =>
+                currentStatus
+                    ? {
+                        ...currentStatus,
+                        currentPlan: upgradeResponse.toPlan,
+                    }
+                    : currentStatus
+            )
             setShowUpgradeModal(false)
-            await refreshQuotaAndHistory()
         } catch (error) {
             setUpgradeError(getFriendlyDashboardError(error))
         } finally {
@@ -358,23 +281,26 @@ export function DashboardPage() {
     }
 
     return (
-        <main className="min-h-screen bg-background pb-10">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-4 sm:px-6 lg:px-8">
-                <header className="flex flex-col gap-4 border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
-                            Superficie de control de SlopGPT
-                        </p>
-                        <h1 className="text-xl font-semibold">Panel de generación de IA</h1>
-                        <p className="text-xs text-muted-foreground">
-                            Autenticado como <strong>{session?.username}</strong> ({session?.userId})
+        <main className="min-h-screen pb-10">
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-4 sm:px-6 lg:px-8">
+                <header className="flex flex-col gap-4 rounded-[2rem] border border-border/80 bg-card/70 p-4 shadow-[0_30px_90px_-55px_rgba(0,0,0,0.8)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase">
+                                SlopGPT Chat
+                            </p>
+                            <PlanBadge plan={effectivePlan} />
+                        </div>
+                        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                            Conversación de IA
+                        </h1>
+                        <p className="max-w-2xl text-sm text-muted-foreground">
+                            Autenticado como <strong>{session?.username}</strong>. Escribe un prompt y revisa la respuesta como en una interfaz de chat real.
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <PlanBadge plan={effectivePlan} />
-                        <Button variant="outline" onClick={refreshQuotaAndHistory}>
-                            <RefreshCcw data-icon="inline-start" />
-                            Actualizar uso
+                        <Button variant="outline" onClick={() => navigate(ROUTES.usage)}>
+                            Uso
                         </Button>
                         <Button variant="outline" onClick={handleLogout}>
                             <LogOut data-icon="inline-start" />
@@ -384,55 +310,33 @@ export function DashboardPage() {
                 </header>
 
                 {dashboardError ? (
-                    <Alert tone="error" title="Comentarios de la solicitud" message={dashboardError} />
+                    <Alert tone="error" title="Error de generación" message={dashboardError} />
                 ) : null}
 
-                <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-                    <div className="flex flex-col gap-6">
-                        <PromptComposer
-                            values={promptValues}
-                            errors={promptErrors}
-                            isSubmitting={isGenerating}
-                            estimator={estimator}
-                            disabled={sendingIsBlocked}
-                            helperMessage={helperMessage}
-                            onSubmit={handleGenerate}
-                            onFieldChange={(name, value) => {
-                                setPromptValues((currentValues) => ({
-                                    ...currentValues,
-                                    [name]: value,
-                                }))
-                            }}
-                        />
+                {quotaError ? (
+                    <Alert
+                        tone="warning"
+                        title="Estado del plan"
+                        message={quotaError}
+                    />
+                ) : null}
 
-                        <UsageHistoryChart history={history} isLoading={isLoadingHistory} />
-                    </div>
-
-                    <div className="flex flex-col gap-6">
-                        <QuotaIndicatorCard
-                            isLoading={isLoadingQuota}
-                            status={quotaStatus}
-                            errorMessage={quotaError}
-                        />
-
-                        <MinuteUsageCard
-                            requestsUsed={requestsUsed}
-                            requestsRemaining={
-                                Number.isFinite(requestLimit) ? requestsRemaining : "∞"
-                            }
-                            planLimitLabel={planLimitLabel}
-                            resetCountdownSeconds={minuteResetCountdown}
-                            blockedCountdownSeconds={blockedCountdown}
-                        />
-
-                        {isQuotaExhausted ? (
-                            <Button className="h-10 text-sm" onClick={() => setShowUpgradeModal(true)}>
-                                Actualizar plan
-                            </Button>
-                        ) : null}
-
-                        <ResponsePanel response={lastResponse} />
-                    </div>
+                <div className="flex flex-col gap-6">
+                    <ResponsePanel response={lastResponse} />
+                    <PromptComposer
+                        values={promptValues}
+                        errors={promptErrors}
+                        isSubmitting={isGenerating}
+                        disabled={sendingIsBlocked}
+                        helperMessage={helperMessage}
+                        onSubmit={handleGenerate}
+                        onFieldChange={(name, value) => {
+                            setPromptValues((currentValues) => ({
+                                ...currentValues,
+                                [name]: value,
+                            }))
+                        }}
+                    />
                 </div>
             </div>
 

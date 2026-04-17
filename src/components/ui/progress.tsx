@@ -11,14 +11,14 @@ export function Progress({
 
     return (
         <div
-            className={cn("h-3 w-full border border-border bg-muted", className)}
+            className={cn("h-3 w-full overflow-hidden rounded-full border border-border bg-muted", className)}
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(safeValue)}
         >
             <div
-                className="h-full bg-primary transition-[width] duration-300"
+                className="h-full rounded-full bg-primary transition-[width] duration-300"
                 style={{ width: `${safeValue}%` }}
             />
         </div>

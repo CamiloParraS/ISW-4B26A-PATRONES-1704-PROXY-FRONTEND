@@ -1,13 +1,12 @@
 type RegisterValues = {
-  userId: string
   email: string
   username: string
-  encryptedPassword: string
+  password: string
 }
 
 type LoginValues = {
   identifier: string
-  encryptedPassword: string
+  password: string
 }
 
 export type AuthFieldErrors<TValues> = Partial<Record<keyof TValues, string>>
@@ -16,10 +15,6 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateRegister(values: RegisterValues) {
   const errors: AuthFieldErrors<RegisterValues> = {}
-
-  if (values.userId.trim().length === 0) {
-    errors.userId = "El ID de usuario es obligatorio."
-  }
 
   if (values.email.trim().length === 0) {
     errors.email = "El correo es obligatorio."
@@ -31,8 +26,8 @@ export function validateRegister(values: RegisterValues) {
     errors.username = "El nombre de usuario debe tener al menos 3 caracteres."
   }
 
-  if (values.encryptedPassword.trim().length === 0) {
-    errors.encryptedPassword = "La contraseña cifrada es obligatoria."
+  if (values.password.trim().length === 0) {
+    errors.password = "La contraseña es obligatoria."
   }
 
   return errors
@@ -45,13 +40,26 @@ export function validateLogin(values: LoginValues) {
     errors.identifier = "El identificador es obligatorio."
   }
 
-  if (values.encryptedPassword.trim().length === 0) {
-    errors.encryptedPassword = "La contraseña cifrada es obligatoria."
+  if (values.password.trim().length === 0) {
+    errors.password = "La contraseña es obligatoria."
   }
 
   return errors
 }
 
+type PromptValues = {
+  prompt: string
+}
+
+export function validatePrompt(values: PromptValues) {
+  const errors: AuthFieldErrors<PromptValues> = {}
+
+  if (values.prompt.trim().length === 0) {
+    errors.prompt = "El prompt es obligatorio y no puede estar vacío."
+  }
+
+  return errors
+}
 export function hasFieldErrors<TValues>(errors: AuthFieldErrors<TValues>) {
   return Object.values(errors).some(Boolean)
 }

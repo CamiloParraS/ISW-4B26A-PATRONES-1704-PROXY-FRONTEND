@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/config/env"
+import { getStoredSession } from "@/lib/storage"
 import type { ApiErrorBody } from "@/types/contracts"
 
 type HttpMethod = "GET" | "POST"
@@ -7,6 +8,7 @@ type RequestOptions = {
   method?: HttpMethod
   body?: unknown
   query?: Record<string, string>
+  retries?: number
 }
 
 type ApiErrorMetadata = {
@@ -86,37 +88,56 @@ export async function apiRequest<TResponse>(
   options: RequestOptions = {}
 ): Promise<TResponse> {
   const method = options.method ?? "GET"
+  const retriesAllowed = options.retries ?? 1
+  let remainingRetries = retriesAllowed
 
-  let response: Response
-  try {
-    response = await fetch(buildUrl(path, options.query), {
-      method,
-      headers: {
+  while (true) {
+    let response: Response
+    try {
+      const session = getStoredSession()
+      const headers: Record<string, string> = {
         "Content-Type": "application/json",
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    })
-  } catch {
-    throw new ApiClientError({
-      status: 0,
-      message:
-        "Could not reach the server. Verify your connection and backend URL configuration.",
-    })
-  }
+      }
+      if (session?.token) {
+        headers.Authorization = `Bearer ${session.token}`
+      }
 
-  const parsedPayload = await safeParseJson(response)
-  if (!response.ok) {
-    const errorBody = parsedPayload as ApiErrorBody | null
-    throw new ApiClientError({
-      status: response.status,
-      message: errorBody?.message ?? "Request failed unexpectedly.",
-      details: errorBody?.details,
-      path: errorBody?.path,
-      metadata: {
-        retryAfterSeconds: getRetryAfterSeconds(response),
-      },
-    })
-  }
+      response = await fetch(buildUrl(path, options.query), {
+        method,
+        headers,
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
+      })
+    } catch {
+      throw new ApiClientError({
+        status: 0,
+        message:
+          "Could not reach the server. Verify your connection and backend URL configuration.",
+      })
+    }
 
-  return parsedPayload as TResponse
+    const parsedPayload = await safeParseJson(response)
+    if (!response.ok) {
+      // Retry on 429 when allowed
+      if (response.status === 429 && remainingRetries > 0) {
+        const waitSec = getRetryAfterSeconds(response) ?? 1
+        await new Promise((r) => setTimeout(r, waitSec * 1000))
+        remainingRetries -= 1
+        continue
+      }
+
+      const errorBody = parsedPayload as ApiErrorBody | null
+      throw new ApiClientError({
+        status: response.status,
+        message: errorBody?.message ?? "Request failed unexpectedly.",
+        details: errorBody?.details,
+        path: errorBody?.path,
+        metadata: {
+          retryAfterSeconds: getRetryAfterSeconds(response),
+        },
+      })
+    }
+
+    return parsedPayload as TResponse
+  }
 }

@@ -51,10 +51,9 @@ export type UpgradeResponseDto = {
 }
 
 export type RegisterRequestDto = {
-  userId: string
   email: string
   username: string
-  encryptedPassword: string
+  password: string
 }
 
 export type RegisterResponseDto = {
@@ -67,7 +66,7 @@ export type RegisterResponseDto = {
 
 export type LoginRequestDto = {
   identifier: string
-  encryptedPassword: string
+  password: string
 }
 
 export type LoginResponseDto = {
@@ -76,6 +75,7 @@ export type LoginResponseDto = {
   username: string
   currentPlan: Plan
   loggedInAt: string
+  token: string
 }
 
 export type ApiErrorBody = {
@@ -90,4 +90,5 @@ export type AuthSession = {
   email: string
   username: string
   currentPlan: Plan
+  token?: string
 }

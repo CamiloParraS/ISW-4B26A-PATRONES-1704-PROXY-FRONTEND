@@ -18,18 +18,18 @@ import { loginUser } from "@/services/auth-service"
 
 type LoginFormState = {
     identifier: string
-    encryptedPassword: string
+    password: string
 }
 
 const initialValues: LoginFormState = {
     identifier: "",
-    encryptedPassword: "",
+    password: "",
 }
 
 function getLoginErrorMessage(error: unknown) {
     if (error instanceof ApiClientError) {
         if (error.status === 400) {
-            return "Credenciales inválidas. Usa tu ID de usuario, correo o nombre de usuario junto con la contraseña cifrada."
+            return "Credenciales inválidas. Usa tu correo o nombre de usuario junto con la contraseña."
         }
 
         if (error.status >= 500) {
@@ -74,7 +74,7 @@ export function LoginPage() {
             setIsSubmitting(true)
             const loginResult = await loginUser({
                 identifier: values.identifier.trim(),
-                encryptedPassword: values.encryptedPassword.trim(),
+                password: values.password.trim(),
             })
 
             signIn({
@@ -82,6 +82,7 @@ export function LoginPage() {
                 email: loginResult.email,
                 username: loginResult.username,
                 currentPlan: loginResult.currentPlan,
+                token: loginResult.token,
             })
 
             navigate(ROUTES.dashboard, { replace: true })
@@ -95,7 +96,7 @@ export function LoginPage() {
     return (
         <AuthLayout
             title="Bienvenido de nuevo"
-            subtitle="Inicia sesión con tu identificador y contraseña cifrada para continuar."
+            subtitle="Inicia sesión con tu identificador y contraseña para continuar."
             alternateAction={{
                 text: "¿Necesitas una cuenta?",
                 linkText: "Regístrate",
@@ -112,16 +113,17 @@ export function LoginPage() {
             {errorMessage ? (
                 <Alert tone="error" title="Error de inicio de sesión" message={errorMessage} />
             ) : null}
-            <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
-                <div className="flex flex-col gap-1">
+            <form className="flex flex-col gap-5" onSubmit={onSubmit} noValidate>
+                <div className="flex flex-col gap-2">
                     <label
                         htmlFor="identifier"
-                        className="text-xs font-semibold tracking-wide uppercase"
+                        className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
                     >
-                        Identificador (correo, nombre de usuario o ID de usuario)
+                        Identificador (correo o nombre de usuario)
                     </label>
                     <Input
                         id="identifier"
+                        placeholder="correo o nombre de usuario"
                         value={values.identifier}
                         onChange={(event) =>
                             setValues((currentValues) => ({
@@ -137,32 +139,33 @@ export function LoginPage() {
                     ) : null}
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                     <label
-                        htmlFor="encryptedPassword"
-                        className="text-xs font-semibold tracking-wide uppercase"
+                        htmlFor="password"
+                        className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase"
                     >
-                        Contraseña cifrada
+                        Contraseña
                     </label>
                     <Input
-                        id="encryptedPassword"
-                        value={values.encryptedPassword}
+                        id="password"
+                        placeholder="••••••••"
+                        value={values.password}
                         onChange={(event) =>
                             setValues((currentValues) => ({
                                 ...currentValues,
-                                encryptedPassword: event.target.value,
+                                password: event.target.value,
                             }))
                         }
-                        aria-invalid={Boolean(fieldErrors.encryptedPassword)}
+                        aria-invalid={Boolean(fieldErrors.password)}
                         autoComplete="current-password"
                         type="password"
                     />
-                    {fieldErrors.encryptedPassword ? (
-                        <p className="text-xs text-destructive">{fieldErrors.encryptedPassword}</p>
+                    {fieldErrors.password ? (
+                        <p className="text-xs text-destructive">{fieldErrors.password}</p>
                     ) : null}
                 </div>
 
-                <Button type="submit" disabled={!canSubmit} className="h-10 text-sm">
+                <Button type="submit" disabled={!canSubmit} className="h-11 w-full text-sm">
                     {isSubmitting ? (
                         <>
                             <Spinner data-icon="inline-start" />

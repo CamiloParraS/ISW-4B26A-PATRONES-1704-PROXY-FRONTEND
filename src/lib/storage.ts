@@ -1,4 +1,4 @@
-import type { AuthSession, GenerateResponseDto } from "@/types/contracts"
+import type { AuthSession, GenerateResponseDto, Plan } from "@/types/contracts"
 
 const SESSION_KEY = "slopgpt.session"
 const LAST_RESPONSE_KEY = "slopgpt.last-response"
@@ -61,4 +61,42 @@ export function setStoredMinuteUsage(snapshot: MinuteUsageSnapshot) {
 
 export function clearStoredMinuteUsage() {
   localStorage.removeItem(MINUTE_USAGE_KEY)
+}
+
+const QUOTA_SNAPSHOT_KEY = "slopgpt.quota-snapshot"
+
+export type QuotaSnapshot = {
+  userId: string
+  currentPlan: Plan
+  monthlyTokensUsed: number
+  monthlyTokensRemaining: number
+  monthlyResetDate: string
+  savedAtEpochMs: number
+}
+
+export function getStoredQuotaSnapshot() {
+  return readJson<QuotaSnapshot>(QUOTA_SNAPSHOT_KEY)
+}
+
+export function setStoredQuotaSnapshot(
+  snapshot: Omit<QuotaSnapshot, "savedAtEpochMs">,
+  options?: { force?: boolean }
+) {
+  const prev = getStoredQuotaSnapshot()
+
+  const shouldWrite =
+    options?.force === true ||
+    !prev ||
+    prev.currentPlan !== snapshot.currentPlan ||
+    prev.monthlyResetDate !== snapshot.monthlyResetDate
+
+  if (!shouldWrite) {
+    return
+  }
+
+  writeJson(QUOTA_SNAPSHOT_KEY, { ...snapshot, savedAtEpochMs: Date.now() })
+}
+
+export function clearStoredQuotaSnapshot() {
+  localStorage.removeItem(QUOTA_SNAPSHOT_KEY)
 }
